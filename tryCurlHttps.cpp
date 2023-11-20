@@ -21,6 +21,8 @@ static size_t write_cb(char *data, size_t n, size_t l, void *userp)
 
 int main(int argc, char** argv) {
     
+    enum wx_units { metric = 'm', imperial = 'e' };
+
     // argc, argv not used
     (void)argc;
     (void)argv;
@@ -44,7 +46,8 @@ int main(int argc, char** argv) {
     // Connection
     std::stringstream srv;
     srv << "https://api.weather.com/v2/pws/observations/current?stationId="
-        << wx_station << "&format=json&units=e&apiKey=" << api_env << std::ends; 
+        << wx_station << "&format=json&units=" << static_cast<char>(imperial) 
+        << "&apiKey=" << api_env << std::ends;
     CURLcode results = curl_easy_setopt(ch, CURLOPT_URL, srv.str().c_str());
 
     // Use HTTP/3 but fallback to to earlier HTTP if necessary
