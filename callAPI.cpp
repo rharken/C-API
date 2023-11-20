@@ -136,6 +136,7 @@ int main()
         my::print_errors_and_exit("Error in BIO_do_connect");
     }
     my::send_http_request(bio.get(), "GET / HTTP/1.1", "hamclock:8080");
+
     std::string response = my::receive_http_message(bio.get());
     std::cout << response << std::endl;
 }
