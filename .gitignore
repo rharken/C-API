@@ -33,6 +33,8 @@
 
 callAPI
 tryCurl
+tryCurlHttps
 .vscode/
 Openssl-bio-fetch.tar.gz
 openssl-bio-fetch/
+setEnv.sh

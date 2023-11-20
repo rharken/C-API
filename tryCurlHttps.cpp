@@ -1,6 +1,9 @@
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <cstdlib>
 #include <curl/curl.h>
+#include <json/json.h>
 
 // Write callback
 static size_t write_cb(char *data, size_t n, size_t l, void *userp)
@@ -22,12 +25,27 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
+    // Read in the API key for the weather server
+    const char* api_env = std::getenv("WX_API_KEY");
+     if (api_env == NULL) {
+        std::cerr << "No WX_API_KEY found! Please set to access the API." << std::endl;
+        exit(1);
+    }
+    const char* wx_station = std::getenv("WX_STATION_ID");
+    if (wx_station == NULL) {
+        std::cerr << "No WX_STATION_ID found! Please set to access the weather." << std::endl;
+        exit(1);
+    }
+
     // Initialize CURL Library
     std::cout << "Initializing Curl..." << std::endl;
     CURL *ch = curl_easy_init();
 
     // Connection
-    CURLcode results = curl_easy_setopt(ch, CURLOPT_URL, "http://hamclock:8080");
+    std::stringstream srv;
+    srv << "https://api.weather.com/v2/pws/observations/current?stationId="
+        << wx_station << "&format=json&units=e&apiKey=" << api_env << std::ends; 
+    CURLcode results = curl_easy_setopt(ch, CURLOPT_URL, srv.str().c_str());
 
     // Use HTTP/3 but fallback to to earlier HTTP if necessary
     curl_easy_setopt(ch, CURLOPT_HTTP_VERSION,
@@ -36,8 +54,8 @@ int main(int argc, char** argv) {
     // Debug setting 1 is on 0 is off
     curl_easy_setopt(ch, CURLOPT_VERBOSE, 0);
 
-    // Allocate a result string
-    std::string res="";
+    // Allocate a result string to pass into the writedata function
+    std::string res = "";
 
     // Set up the callback
     curl_easy_setopt(ch, CURLOPT_WRITEFUNCTION, write_cb);
@@ -62,10 +80,22 @@ int main(int argc, char** argv) {
         } while (h);
     }
 
-    // Now print the returned data
+    // Now print the returned data as json
     std::cout << "RESULTS: " << std::endl;
-    std::cout << res << std::endl;
+    Json::CharReaderBuilder builder;
+    const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    Json::Value root;
+    JSONCPP_STRING err;
+
+    if (!reader->parse(res.c_str(), res.c_str() + static_cast<int>(res.length()), &root,
+                       &err))
+    {
+        std::cout << "error" << std::endl;
+        return EXIT_FAILURE;
+    }
     
+    std::cout << root << std::endl;
+
     // Cleanup
     curl_easy_cleanup(ch);
 
