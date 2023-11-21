@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
     Json::Value root;
     JSONCPP_STRING err;
 
+    // Supposedly std::string is contiguous starting in C++12
     if (!reader->parse(res.c_str(), res.c_str() + static_cast<int>(res.length()), &root,
                        &err))
     {
